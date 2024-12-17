@@ -1,22 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Input, Button, Card, List, message, Popconfirm, Tooltip, Progress } from 'antd';
+import { Modal, Input, Button, Card, List, message, Popconfirm, Tooltip, Progress, Table } from 'antd';
 import { 
   PlusOutlined, 
   AppstoreOutlined, 
   UnorderedListOutlined, 
   EditOutlined, 
   DeleteOutlined,
-  EyeOutlined,
-  EyeInvisibleOutlined,
   CopyOutlined,
-  SafetyOutlined
+  EyeOutlined,
+  EyeInvisibleOutlined
 } from '@ant-design/icons';
-import { collection, addDoc, getDocs, query, where, doc, deleteDoc, updateDoc, Timestamp } from 'firebase/firestore';
+import { collection, addDoc, getDocs, deleteDoc, doc, updateDoc, Timestamp } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 import Header from '../components/Header';
 import LockScreen from '../components/LockScreen';
-import { checkPasswordStrength } from '../utils/passwordStrength';
+import PasswordGenerator from '../components/PasswordGenerator';
 
 interface Credential {
   id: string;
@@ -73,7 +72,6 @@ const Credentials: React.FC = () => {
     
     try {
       setLoading(true);
-      console.log('Fetching credentials for user:', user.uid);
       const credentialsRef = collection(db, 'users', user.uid, 'credentials');
       const querySnapshot = await getDocs(credentialsRef);
       const fetchedCredentials: Credential[] = [];
@@ -88,61 +86,10 @@ const Credentials: React.FC = () => {
         } as Credential);
       });
       
-      console.log('Fetched credentials:', fetchedCredentials.length);
       setCredentials(fetchedCredentials.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()));
     } catch (error) {
       console.error('Error fetching credentials:', error);
       message.error('Failed to fetch credentials: ' + (error as Error).message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleAddCredential = async () => {
-    if (!user) {
-      console.error('No user found');
-      return;
-    }
-
-    // Validate form
-    if (!title.trim()) {
-      message.error('Title is required');
-      return;
-    }
-    if (!username.trim()) {
-      message.error('Username is required');
-      return;
-    }
-    if (!password.trim()) {
-      message.error('Password is required');
-      return;
-    }
-    
-    try {
-      setLoading(true);
-      console.log('Adding credential for user:', user.uid);
-      const credentialsRef = collection(db, 'users', user.uid, 'credentials');
-      
-      const newCredential = {
-        title: title.trim(),
-        username: username.trim(),
-        password: password.trim(),
-        url: url.trim(),
-        createdAt: Timestamp.fromDate(new Date()),
-        userId: user.uid // Add userId for extra security
-      };
-      console.log('New credential data:', { ...newCredential, password: '****' });
-      
-      const docRef = await addDoc(credentialsRef, newCredential);
-      console.log('Document written with ID:', docRef.id);
-      
-      message.success('Credential added successfully');
-      setIsModalVisible(false);
-      clearForm();
-      fetchCredentials();
-    } catch (error) {
-      console.error('Error adding credential:', error);
-      message.error('Failed to add credential: ' + (error as Error).message);
     } finally {
       setLoading(false);
     }
@@ -258,30 +205,6 @@ const Credentials: React.FC = () => {
     }
   };
 
-  const renderPasswordStrength = (password: string) => {
-    const strength = checkPasswordStrength(password);
-    return (
-      <div className="mt-2">
-        <div className="flex items-center gap-2">
-          <SafetyOutlined style={{ color: strength.color }} />
-          <Progress 
-            percent={strength.score * 25} 
-            size="small" 
-            status="active"
-            strokeColor={strength.color}
-            showInfo={false}
-          />
-        </div>
-        <div className="text-sm text-gray-500 flex justify-between mt-1">
-          <span>{strength.label}</span>
-          <Tooltip title="Estimated time to crack">
-            <span>🕒 {strength.crackTime}</span>
-          </Tooltip>
-        </div>
-      </div>
-    );
-  };
-
   const renderCredentialInfo = (credential: Credential) => (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
@@ -329,8 +252,6 @@ const Credentials: React.FC = () => {
           </a>
         </div>
       )}
-
-      {/* {renderPasswordStrength(credential.password)} */}
     </div>
   );
 
@@ -430,6 +351,124 @@ const Credentials: React.FC = () => {
 
   );
 
+  const renderTableView = () => {
+    const columns = [
+      {
+        title: 'Title',
+        dataIndex: 'title',
+        key: 'title',
+        render: (text: string, record: Credential) => (
+          <div>
+            <div className="font-medium">{text}</div>
+            {record.url && (
+              <a 
+                href={record.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-gray-500 hover:text-blue-500"
+              >
+                {record.url}
+              </a>
+            )}
+          </div>
+        ),
+      },
+      {
+        title: 'Username',
+        dataIndex: 'username',
+        key: 'username',
+        render: (text: string) => (
+          <div className="flex items-center gap-2">
+            <span>{text}</span>
+            <Tooltip title="Copy username">
+              <Button
+                type="text"
+                icon={<CopyOutlined />}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  copyToClipboard(text, 'username');
+                }}
+              />
+            </Tooltip>
+          </div>
+        ),
+      },
+      {
+        title: 'Password',
+        dataIndex: 'password',
+        key: 'password',
+        render: (_: any, record: Credential) => (
+          <div className="flex items-center gap-2">
+            <span className="font-mono">
+              {visiblePasswords[record.id] ? record.password : '••••••••'}
+            </span>
+            <Tooltip title="Toggle visibility">
+              <Button
+                type="text"
+                icon={visiblePasswords[record.id] ? <EyeInvisibleOutlined /> : <EyeOutlined />}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  togglePasswordVisibility(record.id);
+                }}
+              />
+            </Tooltip>
+            <Tooltip title="Copy password">
+              <Button
+                type="text"
+                icon={<CopyOutlined />}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  copyToClipboard(record.password, 'password');
+                }}
+              />
+            </Tooltip>
+          </div>
+        ),
+      },
+      {
+        title: 'Actions',
+        key: 'actions',
+        render: (_: any, record: Credential) => (
+          <div className="flex gap-2">
+            <Button
+              type="text"
+              icon={<EditOutlined />}
+              onClick={() => handleEdit(record)}
+            >
+              Edit
+            </Button>
+            <Popconfirm
+              title="Delete Credential"
+              description="Are you sure you want to delete this credential?"
+              onConfirm={() => handleDelete(record.id)}
+              okText="Yes"
+              cancelText="No"
+              okButtonProps={{ danger: true }}
+            >
+              <Button
+                type="text"
+                icon={<DeleteOutlined />}
+                danger
+              >
+                Delete
+              </Button>
+            </Popconfirm>
+          </div>
+        ),
+      },
+    ];
+
+    return (
+      <Table
+        dataSource={filteredCredentials}
+        columns={columns}
+        rowKey="id"
+        className="bg-white rounded-lg shadow"
+        pagination={{ pageSize: 10 }}
+      />
+    );
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Header onLockScreen={() => setIsLocked(true)} />
@@ -463,23 +502,27 @@ const Credentials: React.FC = () => {
               </Tooltip>
             </Button.Group>
             <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={() => setIsModalVisible(true)}
-          >
-            Add Credential
-          </Button>
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={() => setIsModalVisible(true)}
+            >
+              Add Credential
+            </Button>
           </div>
-          
         </div>
 
-        {loading ? (
-          <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="flex gap-6">
+          <div className="flex-grow">
+            {loading ? (
+              <div>Loading...</div>
+            ) : (
+              isGridView ? renderGridView() : renderTableView()
+            )}
           </div>
-        ) : (
-          isGridView ? renderGridView() : renderListView()
-        )}
+          <div className="w-80">
+            <PasswordGenerator />
+          </div>
+        </div>
 
         <Modal
           title={isEditMode ? "Edit Credential" : "Add New Credential"}

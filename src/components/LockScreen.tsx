@@ -13,25 +13,27 @@ interface LockScreenProps {
 const LockScreen: React.FC<LockScreenProps> = ({ isLocked, onUnlock }) => {
   const [pin, setPin] = useState('');
   const { user } = useAuth();
-  const [storedPin, setStoredPin] = useState('0000'); // Default PIN
+  const [storedPin, setStoredPin] = useState(); // Default PIN
 
   useEffect(() => {
+    const fetchPin = async () => {
+      if (!user) return; 
+  
+      try {
+        const pinDoc = await getDoc(doc(db, 'users', user.uid, 'settings', 'pin'));
+        if (pinDoc.exists()) {
+          setStoredPin(pinDoc.data().pin);
+          // console.log("pin successfully fetched:", storedPin);
+        }
+      } catch (error) {
+        console.error('Error fetching PIN:', error);
+      }
+    };
+  
     fetchPin();
   }, [user]);
 
-  const fetchPin = async () => {
-    if (!user) return;
-
-    try {
-      const pinDoc = await getDoc(doc(db, 'users', user.uid, 'settings', 'pin'));
-      if (pinDoc.exists()) {
-        setStoredPin(pinDoc.data().pin);
-      }
-    } catch (error) {
-      console.error('Error fetching PIN:', error);
-    }
-  };
-
+ 
   const handleUnlock = () => {
     if (pin === storedPin) {
       setPin('');

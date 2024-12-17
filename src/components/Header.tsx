@@ -18,22 +18,22 @@ const Header: React.FC<HeaderProps> = ({ onLockScreen }) => {
   const [currentPin, setCurrentPin] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchPin = async () => {
-      if (!user) return;
-      try {
-        const pinDocRef = doc(db, 'users', user.uid, 'settings', 'pin');
-        const pinDoc = await getDoc(pinDocRef);
-        if (pinDoc.exists()) {
-          setCurrentPin(pinDoc.data().pin);
-        }
-      } catch (error) {
-        console.error('Error fetching PIN:', error);
-      }
-    };
+    
 
     fetchPin();
   }, [user]);
-
+  const fetchPin = async () => {
+    if (!user) return;
+    try {
+      const pinDocRef = doc(db, 'users', user.uid, 'settings', 'pin');
+      const pinDoc = await getDoc(pinDocRef);
+      if (pinDoc.exists()) {
+        setCurrentPin(pinDoc.data().pin);
+      }
+    } catch (error) {
+      console.error('Error fetching PIN:', error);
+    }
+  };
   const handleLogout = async () => {
     try {
       await logout();
@@ -70,6 +70,7 @@ const Header: React.FC<HeaderProps> = ({ onLockScreen }) => {
       setIsPinModalVisible(false);
       setNewPin('');
       setConfirmPin('');
+      window.location.reload();
     } catch (error) {
       console.error('Error updating PIN:', error);
       message.error('Failed to update PIN');
