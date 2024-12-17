@@ -1,5 +1,4 @@
 import React from 'react';
-import { FiClock, FiZap } from 'react-icons/fi';
 
 interface ServerMetricsProps {
   responseTime: number | null;
@@ -17,7 +16,6 @@ const ServerMetrics: React.FC<ServerMetricsProps> = ({ responseTime, lastChecked
     <div className="space-y-3 bg-gray-50 rounded-lg p-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center text-gray-600">
-          <FiClock className="w-4 h-4 mr-2" />
           <span className="text-sm">Last Check</span>
         </div>
         <span className="text-sm font-medium">
@@ -28,7 +26,6 @@ const ServerMetrics: React.FC<ServerMetricsProps> = ({ responseTime, lastChecked
       {responseTime !== null && (
         <div className="flex items-center justify-between">
           <div className="flex items-center text-gray-600">
-            <FiZap className="w-4 h-4 mr-2" />
             <span className="text-sm">Response Time</span>
           </div>
           <span className={`text-sm font-medium ${getResponseTimeColor(responseTime)}`}>

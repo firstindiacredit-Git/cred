@@ -3,21 +3,17 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Drawer, Button } from 'antd';
 import { 
   DashboardOutlined, 
-  SettingOutlined, 
   LoginOutlined, 
   LogoutOutlined, 
   LockOutlined,
   MenuOutlined 
 } from '@ant-design/icons';
 import { useAuth } from '../contexts/AuthContext';
-import { useTour } from '../contexts/TourContext';
-import Tour from './Tour';
 
 const Navigation: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
-  const { startTour } = useTour();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleLogout = async () => {
@@ -31,18 +27,12 @@ const Navigation: React.FC = () => {
       icon: <DashboardOutlined />,
       label: 'Dashboard',
     },
-    ...(user?.role === 'admin' ? [
-      {
-        key: '/admin',
-        icon: <SettingOutlined />,
-        label: 'Admin',
-      },
       {
         key: '/locker',
         icon: <LockOutlined />,
         label: 'Locker',
       }
-    ] : []),
+    
   ];
   
 
@@ -73,17 +63,7 @@ const Navigation: React.FC = () => {
           </div>
 
           <div className="hidden md:flex md:items-center md:space-x-4">
-            <button
-              onClick={startTour}
-              className="flex items-center space-x-2 text-blue-100 hover:text-white px-3 py-2 rounded-lg hover:bg-blue-700 transition-all"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-              </svg>
-              <span>Take Tour</span>
-            </button>
-            <Tour />
-            {user ? (
+            
               <button
                 onClick={handleLogout}
                 className="flex bg-red-600 px-3 py-2 rounded-lg drop-shadow-sm hover:bg-red-500 transition-all items-center space-x-2 text-white hover:text-white"
@@ -91,15 +71,7 @@ const Navigation: React.FC = () => {
                 <LogoutOutlined />
                 <span>Logout</span>
               </button>
-            ) : (
-              <button
-                onClick={() => navigate('/login')}
-                className="flex items-center space-x-2 text-blue-100 hover:text-white"
-              >
-                <LoginOutlined />
-                <span>Login</span>
-              </button>
-            )}
+            
           </div>
 
           {/* Mobile Menu Button */}
