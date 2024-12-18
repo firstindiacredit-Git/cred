@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, Input, Button, Slider, Switch, Typography, message } from 'antd';
 import { CopyOutlined, ReloadOutlined } from '@ant-design/icons';
 
@@ -12,13 +12,16 @@ const PasswordGenerator: React.FC = () => {
   const [includeLowercase, setIncludeLowercase] = useState(true);
   const [includeUppercase, setIncludeUppercase] = useState(true);
 
-  const generatePassword = () => {
+  const charset = useMemo(() => {
     let charset = '';
     if (includeLowercase) charset += 'abcdefghijklmnopqrstuvwxyz';
     if (includeUppercase) charset += 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
     if (includeNumbers) charset += '0123456789';
     if (includeSymbols) charset += '!@#$%^&*()_+-=[]{}|;:,.<>?';
+    return charset;
+  }, [includeLowercase, includeUppercase, includeNumbers, includeSymbols]);
 
+  const generatePassword = () => {
     if (!charset) {
       message.error('Please select at least one character type');
       return;
@@ -29,7 +32,11 @@ const PasswordGenerator: React.FC = () => {
       const randomIndex = Math.floor(Math.random() * charset.length);
       newPassword += charset[randomIndex];
     }
-    setPassword(newPassword);
+
+    // Only update password if it has changed to avoid unnecessary re-renders
+    if (newPassword !== password) {
+      setPassword(newPassword);
+    }
   };
 
   const copyToClipboard = async () => {
