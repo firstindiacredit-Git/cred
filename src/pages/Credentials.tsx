@@ -37,6 +37,7 @@ import { useAuth } from "../contexts/AuthContext";
 import Header from "../components/Header";
 import LockScreen from "../components/LockScreen";
 import PasswordGenerator from "../components/PasswordGenerator";
+import Footer from "../components/Footer";
 
 interface Credential {
   id: string;
@@ -592,23 +593,77 @@ const Credentials: React.FC = () => {
   }, [filteredCredentials, handleEdit, handleDelete, visiblePasswords, copyToClipboard, togglePasswordVisibility]);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       <Header onLockScreen={() => setIsLocked(true)} />
       <LockScreen isLocked={isLocked} onUnlock={() => setIsLocked(false)} />
 
       <div
-        className={`max-w-7xl mx-auto px-4 py-6 ${
+        className={`max-w-7xl mx-auto px-4 py-6 flex-1 ${
           isLocked ? "filter blur-lg" : ""
         }`}
       >
-        <div className="mb-6 flex justify-between items-center">
+        <div className="sm:mb-6 flex justify-between items-center">
           <div className="flex w-full items-center space-x-8">
             <Input.Search
               placeholder="Search credentials..."
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full"
             />
+            <div className="hidden  sm:block">
             <Button.Group>
+              <Button
+                type={isGridView ? "primary" : "default"}
+                icon={<AppstoreOutlined />}
+                onClick={() => setIsGridView(true)}
+              />
+              {showListViewOption && (
+                <Button
+                  type={!isGridView ? "primary" : "default"}
+                  icon={<UnorderedListOutlined />}
+                  onClick={() => setIsGridView(false)}
+                />
+              )}
+              <Tooltip
+                title={
+                  showAllPasswords ? "Hide all passwords" : "Show all passwords"
+                }
+              >
+                <Button
+                  type={showAllPasswords ? "primary" : "default"}
+                  icon={
+                    showAllPasswords ? (
+                      <EyeInvisibleOutlined />
+                    ) : (
+                      <EyeOutlined />
+                    )
+                  }
+                  onClick={() => setShowAllPasswords(!showAllPasswords)}
+                />
+              </Tooltip>
+              {isMobileView && (
+                <Tooltip title="Password Generator">
+                  <Button
+                    type={isPasswordGenVisible ? "primary" : "default"}
+                    icon={<KeyOutlined />}
+                    onClick={() => setIsPasswordGenVisible(true)}
+                  />
+                </Tooltip>
+              )}
+            </Button.Group>
+            </div>
+            <Button
+              type="primary"
+              className="hidden sm:block"
+              icon={<PlusOutlined />}
+              onClick={() => setIsModalVisible(true)}
+            >
+              {isMobileView ? "Add" : "Add Credential"}
+            </Button>
+          </div>
+          
+        </div>
+        <div className="my-4 flex justify-between sm:hidden">
+          <Button.Group>
               <Button
                 type={isGridView ? "primary" : "default"}
                 icon={<AppstoreOutlined />}
@@ -656,7 +711,6 @@ const Credentials: React.FC = () => {
               {isMobileView ? "Add" : "Add Credential"}
             </Button>
           </div>
-        </div>
 
         <div className="flex gap-6">
           <div className={`flex-grow ${!isMobileView ? 'flex-1' : 'w-full'}`}>
@@ -724,6 +778,7 @@ const Credentials: React.FC = () => {
           </div>
         </Modal>
       </div>
+      <Footer />
     </div>
   );
 };
