@@ -393,8 +393,30 @@ const Credentials: React.FC = () => {
     );
   }, [credentials, searchQuery]);
 
-  const renderGridView = useCallback(
-    () => (
+  const renderGridView = useCallback(() => {
+    if (filteredCredentials.length === 0) {
+      return (
+        <div className="flex w-[50vw] flex-col items-center justify-center p-8 bg-white rounded-lg shadow text-center">
+          <div className="w-24 h-24 mb-6 text-gray-300">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+            </svg>
+          </div>
+          <h3 className="text-xl font-semibold text-gray-800 mb-2">No Credentials Found</h3>
+          <p className="text-gray-500 mb-6">Start by adding your first credential using the button above.</p>
+          <Button 
+            type="primary" 
+            icon={<PlusOutlined />}
+            onClick={() => setIsModalVisible(true)}
+            size="large"
+          >
+            Add Credential
+          </Button>
+        </div>
+      );
+    }
+
+    return (
       <div className={`grid gap-6 ${isMobileView ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'}`}>
         {filteredCredentials.map((credential, index) => (
           <Card
@@ -435,17 +457,38 @@ const Credentials: React.FC = () => {
           </Card>
         ))}
       </div>
-    ),
-    [
-      filteredCredentials,
-      handleEdit,
-      handleDelete,
-      renderCredentialInfo,
-      MemoizedLogoWithFallback,
-    ]
-  );
+    );
+  }, [
+    filteredCredentials,
+    handleEdit,
+    handleDelete,
+    renderCredentialInfo,
+    MemoizedLogoWithFallback,
+  ]);
 
   const renderTableView = useCallback(() => {
+    if (filteredCredentials.length === 0) {
+      return (
+        <div className="flex w-[50vw] flex-col items-center justify-center p-8 bg-white rounded-lg shadow text-center">
+          <div className="w-24 h-24 mb-6 text-gray-300">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H6a2 2 0 00-2 2v8a2 2 0 002 2z" />
+            </svg>
+          </div>
+          <h3 className="text-xl font-semibold text-gray-800 mb-2">No Credentials Found</h3>
+          <p className="text-gray-500 mb-6">Start by adding your first credential using the button above.</p>
+          <Button 
+            type="primary" 
+            icon={<PlusOutlined />}
+            onClick={() => setIsModalVisible(true)}
+            size="large"
+          >
+            Add Credential
+          </Button>
+        </div>
+      );
+    }
+
     const columns = [
       {
         title: '#',
@@ -531,7 +574,13 @@ const Credentials: React.FC = () => {
               <Tooltip title="Toggle visibility">
                 <Button
                   type="text"
-                  icon={visiblePasswords[record.id] ? <EyeInvisibleOutlined /> : <EyeOutlined />}
+                  icon={
+                    visiblePasswords[record.id] ? (
+                      <EyeInvisibleOutlined />
+                    ) : (
+                      <EyeOutlined />
+                    )
+                  }
                   onClick={(e) => {
                     e.stopPropagation();
                     togglePasswordVisibility(record.id);

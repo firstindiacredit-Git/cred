@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { useNavigate } from 'react-router-dom';
 import { 
   signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
   User as FirebaseUser,
@@ -14,6 +15,7 @@ interface AuthContextType {
   user: FirebaseUser | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
+  signup: (email: string, password: string) => Promise<void>;
   loginWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -29,7 +31,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
       setLoading(false);
-      if (!user && window.location.pathname !== '/login') {
+      if (!user && window.location.pathname !== '/login' && window.location.pathname !== '/signup') {
         navigate('/login');
       }
     });
@@ -37,12 +39,27 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return unsubscribe;
   }, [navigate]);
 
+  const signup = async (email: string, password: string) => {
+    try {
+      await createUserWithEmailAndPassword(auth, email, password);
+      navigate('/');
+    } catch (error: any) {
+      throw new Error(error.message || 'Signup failed');
+    }
+  };
+
   const login = async (email: string, password: string) => {
     try {
       await signInWithEmailAndPassword(auth, email, password);
       navigate('/');
     } catch (error: any) {
-      throw new Error(error.message || 'Login failed');
+      if (error.code === 'auth/user-not-found') {
+        throw new Error('No account exists with this email. Please sign up first.');
+      } else if (error.code === 'auth/wrong-password') {
+        throw new Error('Incorrect password. Please try again.');
+      } else {
+        throw new Error(error.message || 'Login failed');
+      }
     }
   };
 
@@ -61,13 +78,22 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       await signOut(auth);
       navigate('/login');
     } catch (error: any) {
-      console.error('Logout failed:', error);
+      throw new Error(error.message || 'Logout failed');
     }
   };
 
+  const value = {
+    user,
+    loading,
+    login,
+    signup,
+    loginWithGoogle,
+    logout,
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, loginWithGoogle, logout }}>
-      {children}
+    <AuthContext.Provider value={value}>
+      {!loading && children}
     </AuthContext.Provider>
   );
 };
