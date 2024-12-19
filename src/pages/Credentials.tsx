@@ -21,6 +21,7 @@ import {
   EyeInvisibleOutlined,
   LinkOutlined,
   GlobalOutlined,
+  KeyOutlined,
 } from "@ant-design/icons";
 import {
   collection,
@@ -80,6 +81,8 @@ const Credentials: React.FC = () => {
     [key: string]: boolean;
   }>({});
   const [showAllPasswords, setShowAllPasswords] = useState(false);
+  const [isPasswordGenVisible, setIsPasswordGenVisible] = useState(false);
+  const [isMobileView, setIsMobileView] = useState(window.innerWidth <= 640);
   const { user } = useAuth();
 
   interface LogoWithFallbackProps {
@@ -148,6 +151,7 @@ const Credentials: React.FC = () => {
       } else {
         setShowListViewOption(true);
       }
+      setIsMobileView(width <= 640);
     };
 
     window.addEventListener("resize", handleResize);
@@ -316,12 +320,13 @@ const Credentials: React.FC = () => {
   const renderCredentialInfo = useCallback(
     (credential: Credential) => (
       <div className="space-y-2">
-        <div className="flex flex-col  gap-2 sm:flex-row items-center justify-between">
+        <div className="flex gap-2  items-center justify-between">
           <strong className="sm:w-1/3">Username:</strong>
           <div className="flex w-2/3 bg-gray-50 justify-between items-center rounded-md">
             <div className=" max-w-full text-nowrap  overflow-x-hidden px-2">
               {credential.username}
             </div>
+            
 
             <div className="flex ml-1  bg-gray-100 rounded-r-md">
               <Tooltip title="Copy username">
@@ -337,7 +342,7 @@ const Credentials: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex flex-col  gap-2 sm:flex-row items-center justify-between">
+        <div className="flex gap-2 items-center justify-between">
           <strong className="sm:w-1/3">Password:</strong>
             <div className="flex w-2/3 bg-gray-50 justify-between items-center rounded-md">
               <div className=" max-w-full text-nowrap  overflow-x-hidden px-2">
@@ -389,7 +394,7 @@ const Credentials: React.FC = () => {
 
   const renderGridView = useCallback(
     () => (
-      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+      <div className={`grid gap-6 ${isMobileView ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'}`}>
         {filteredCredentials.map((credential, index) => (
           <Card
             key={credential.id}
@@ -458,7 +463,7 @@ const Credentials: React.FC = () => {
         render: (text: string, record: Credential) => (
           <div className="flex items-center justify-between gap-2">
             <div className="flex gap-2 truncate">
-              <span className="uppercase truncate">{text}</span>
+              <span className="uppercase">{text}</span>
               {record.url && (
                 <a
                   href={"https://" + record.url}
@@ -633,19 +638,28 @@ const Credentials: React.FC = () => {
                   onClick={() => setShowAllPasswords(!showAllPasswords)}
                 />
               </Tooltip>
+              {isMobileView && (
+                <Tooltip title="Password Generator">
+                  <Button
+                    type={isPasswordGenVisible ? "primary" : "default"}
+                    icon={<KeyOutlined />}
+                    onClick={() => setIsPasswordGenVisible(true)}
+                  />
+                </Tooltip>
+              )}
             </Button.Group>
             <Button
               type="primary"
               icon={<PlusOutlined />}
               onClick={() => setIsModalVisible(true)}
             >
-              Add Credential
+              {isMobileView ? "Add" : "Add Credential"}
             </Button>
           </div>
         </div>
 
         <div className="flex gap-6">
-          <div className="flex-grow">
+          <div className={`flex-grow ${!isMobileView ? 'flex-1' : 'w-full'}`}>
             {loading ? (
               <div>Loading...</div>
             ) : isGridView ? (
@@ -654,10 +668,21 @@ const Credentials: React.FC = () => {
               renderTableView()
             )}
           </div>
-          <div className="w-80">
-            <PasswordGenerator />
-          </div>
+          {!isMobileView && (
+            <div className="w-80">
+              <PasswordGenerator />
+            </div>
+          )}
         </div>
+
+        <Modal
+          open={isPasswordGenVisible}
+          onCancel={() => setIsPasswordGenVisible(false)}
+          footer={null}
+          width={400}
+        >
+          <PasswordGenerator />
+        </Modal>
 
         <Modal
           title={isEditMode ? "Edit Credential" : "Add New Credential"}

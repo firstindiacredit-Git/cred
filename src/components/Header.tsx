@@ -135,7 +135,7 @@ const Header: React.FC<HeaderProps> = ({ onLockScreen }) => {
   return (
     <header className="bg-white shadow-sm">
       <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-        <h1 className="text-xl font-semibold text-gray-800">Credentials Manager</h1>
+        <img src="CRED LOGO.png" className='h-6' alt="Cred logo" />
         <div className="flex items-center space-x-4">
           <Button
             type="text"
