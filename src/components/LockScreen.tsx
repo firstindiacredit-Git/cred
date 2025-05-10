@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Modal, Input, message } from "antd";
 import { LockOutlined } from "@ant-design/icons";
 import { useAuth } from "../contexts/AuthContext";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, Timestamp } from "firebase/firestore";
 import { db } from "../firebase";
 import { auth } from "../firebase";
 import {
@@ -20,7 +20,7 @@ interface LockScreenProps {
 const LockScreen: React.FC<LockScreenProps> = ({ isLocked, onUnlock }) => {
   const [pin, setPin] = useState("");
   const { user } = useAuth();
-  const [storedPin, setStoredPin] = useState(); // Default PIN
+  const [storedPin, setStoredPin] = useState<string | undefined>(); // Default PIN
   const [sending, setSending] = useState(false);
   const [resetModalVisible, setResetModalVisible] = useState(false);
   const [newPin, setNewPin] = useState("");
@@ -144,15 +144,12 @@ const LockScreen: React.FC<LockScreenProps> = ({ isLocked, onUnlock }) => {
     }
     setResetLoading(true);
     try {
-      await import("firebase/firestore").then(
-        async ({ doc, setDoc, Timestamp }) => {
-          const userSettingsRef = doc(db, "users", user.uid, "settings", "pin");
-          await setDoc(userSettingsRef, {
-            pin: newPin,
-            updatedAt: Timestamp.fromDate(new Date()),
-          });
-        }
-      );
+      const userSettingsRef = doc(db, "users", user.uid, "settings", "pin");
+      await setDoc(userSettingsRef, {
+        pin: newPin,
+        updatedAt: Timestamp.fromDate(new Date()),
+      });
+      setStoredPin(newPin); // Update local state
       message.success("PIN updated successfully.");
       setResetModalVisible(false);
       setNewPin("");
