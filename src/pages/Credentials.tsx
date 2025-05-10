@@ -9,6 +9,7 @@ import {
   Popconfirm,
   Tooltip,
   Table,
+  Skeleton,
 } from "antd";
 import {
   PlusOutlined,
@@ -827,7 +828,13 @@ const Credentials: React.FC = () => {
         <div className="flex gap-6">
           <div className={`flex-grow ${!isMobileView ? "flex-1" : "w-full"}`}>
             {loading ? (
-              <div>Loading...</div>
+              <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
+                {[...Array(4)].map((_, idx) => (
+                  <Card key={idx} className="hover:shadow-lg transition-shadow">
+                    <Skeleton active avatar paragraph={{ rows: 6 }} />
+                  </Card>
+                ))}
+              </div>
             ) : isGridView ? (
               renderGridView()
             ) : (
