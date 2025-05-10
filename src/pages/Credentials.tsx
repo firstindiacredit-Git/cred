@@ -77,7 +77,10 @@ const Credentials: React.FC = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [url, setUrl] = useState("");
-  const [isLocked, setIsLocked] = useState(false);
+  const [isLocked, setIsLocked] = useState(() => {
+    const savedLockState = localStorage.getItem("isLocked");
+    return savedLockState === "true";
+  });
   const [visiblePasswords, setVisiblePasswords] = useState<{
     [key: string]: boolean;
   }>({});
@@ -224,6 +227,21 @@ const Credentials: React.FC = () => {
     }
   };
 
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "isLocked") {
+        setIsLocked(e.newValue === "true");
+      }
+    };
+
+    // Listen for storage changes (useful for multiple tabs)
+    window.addEventListener("storage", handleStorageChange);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, []);
+
   const handleSave = async () => {
     if (!user) return;
 
@@ -327,7 +345,6 @@ const Credentials: React.FC = () => {
             <div className=" max-w-full text-nowrap  overflow-x-hidden px-2">
               {credential.username}
             </div>
-            
 
             <div className="flex ml-1  bg-gray-100 rounded-r-md">
               <Tooltip title="Copy username">
@@ -345,39 +362,39 @@ const Credentials: React.FC = () => {
 
         <div className="flex gap-2 items-center justify-between">
           <strong className="sm:w-1/3">Password:</strong>
-            <div className="flex w-2/3 bg-gray-50 justify-between items-center rounded-md">
-              <div className=" max-w-full text-nowrap  overflow-x-hidden px-2">
-                {visiblePasswords[credential.id]
-                  ? credential.password
-                  : "••••••••"}
-              </div>
-              <div className="flex ml-1 bg-gray-100 rounded-r-md">
-                <Tooltip title="Toggle visibility">
-                  <Button
-                    type="text"
-                    icon={
-                      visiblePasswords[credential.id] ? (
-                        <EyeInvisibleOutlined />
-                      ) : (
-                        <EyeOutlined />
-                      )
-                    }
-                    onClick={() => togglePasswordVisibility(credential.id)}
-                  />
-                </Tooltip>
-                <Tooltip title="Copy password">
-                  <Button
-                    type="text"
-                    icon={<CopyOutlined />}
-                    onClick={() =>
-                      copyToClipboard(credential.password, "password")
-                    }
-                  />
-                </Tooltip>
-              </div>
+          <div className="flex w-2/3 bg-gray-50 justify-between items-center rounded-md">
+            <div className=" max-w-full text-nowrap  overflow-x-hidden px-2">
+              {visiblePasswords[credential.id]
+                ? credential.password
+                : "••••••••"}
+            </div>
+            <div className="flex ml-1 bg-gray-100 rounded-r-md">
+              <Tooltip title="Toggle visibility">
+                <Button
+                  type="text"
+                  icon={
+                    visiblePasswords[credential.id] ? (
+                      <EyeInvisibleOutlined />
+                    ) : (
+                      <EyeOutlined />
+                    )
+                  }
+                  onClick={() => togglePasswordVisibility(credential.id)}
+                />
+              </Tooltip>
+              <Tooltip title="Copy password">
+                <Button
+                  type="text"
+                  icon={<CopyOutlined />}
+                  onClick={() =>
+                    copyToClipboard(credential.password, "password")
+                  }
+                />
+              </Tooltip>
             </div>
           </div>
         </div>
+      </div>
     ),
     [visiblePasswords, copyToClipboard, togglePasswordVisibility]
   );
@@ -398,14 +415,28 @@ const Credentials: React.FC = () => {
       return (
         <div className="flex w-[50vw] flex-col items-center justify-center p-8 bg-white rounded-lg shadow text-center">
           <div className="w-24 h-24 mb-6 text-gray-300">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.5}
+                d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"
+              />
             </svg>
           </div>
-          <h3 className="text-xl font-semibold text-gray-800 mb-2">No Credentials Found</h3>
-          <p className="text-gray-500 mb-6">Start by adding your first credential using the button above.</p>
-          <Button 
-            type="primary" 
+          <h3 className="text-xl font-semibold text-gray-800 mb-2">
+            No Credentials Found
+          </h3>
+          <p className="text-gray-500 mb-6">
+            Start by adding your first credential using the button above.
+          </p>
+          <Button
+            type="primary"
             icon={<PlusOutlined />}
             onClick={() => setIsModalVisible(true)}
             size="large"
@@ -417,7 +448,13 @@ const Credentials: React.FC = () => {
     }
 
     return (
-      <div className={`grid gap-6 ${isMobileView ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'}`}>
+      <div
+        className={`grid gap-6 ${
+          isMobileView
+            ? "grid-cols-1 md:grid-cols-2"
+            : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
+        }`}
+      >
         {filteredCredentials.map((credential, index) => (
           <Card
             key={credential.id}
@@ -471,14 +508,28 @@ const Credentials: React.FC = () => {
       return (
         <div className="flex w-[50vw] flex-col items-center justify-center p-8 bg-white rounded-lg shadow text-center">
           <div className="w-24 h-24 mb-6 text-gray-300">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H6a2 2 0 00-2 2v8a2 2 0 002 2z" />
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.5}
+                d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H6a2 2 0 00-2 2v8a2 2 0 002 2z"
+              />
             </svg>
           </div>
-          <h3 className="text-xl font-semibold text-gray-800 mb-2">No Credentials Found</h3>
-          <p className="text-gray-500 mb-6">Start by adding your first credential using the button above.</p>
-          <Button 
-            type="primary" 
+          <h3 className="text-xl font-semibold text-gray-800 mb-2">
+            No Credentials Found
+          </h3>
+          <p className="text-gray-500 mb-6">
+            Start by adding your first credential using the button above.
+          </p>
+          <Button
+            type="primary"
             icon={<PlusOutlined />}
             onClick={() => setIsModalVisible(true)}
             size="large"
@@ -491,17 +542,17 @@ const Credentials: React.FC = () => {
 
     const columns = [
       {
-        title: '#',
-        key: 'index',
-        fixed: 'left' as const,
+        title: "#",
+        key: "index",
+        fixed: "left" as const,
         width: 60,
-        className: 'bg-white',
+        className: "bg-white",
         render: (_: any, _record: any, index: number) => index + 1,
       },
       {
-        title: 'Title',
-        dataIndex: 'title',
-        key: 'title',
+        title: "Title",
+        dataIndex: "title",
+        key: "title",
         width: 300,
         ellipsis: true,
         render: (text: string, record: Credential) => (
@@ -526,7 +577,7 @@ const Credentials: React.FC = () => {
                 className="w-6 h-6 rounded-full object-contain shrink-0"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
-                  target.style.display = 'none';
+                  target.style.display = "none";
                 }}
               />
             )}
@@ -534,16 +585,14 @@ const Credentials: React.FC = () => {
         ),
       },
       {
-        title: 'Username',
-        dataIndex: 'username',
-        key: 'username',
+        title: "Username",
+        dataIndex: "username",
+        key: "username",
         width: 250,
         ellipsis: true,
         render: (text: string) => (
           <div className="flex bg-gray-50 justify-between items-center rounded-md">
-            <div className="truncate px-2">
-              {text}
-            </div>
+            <div className="truncate px-2">{text}</div>
             <div className="flex ml-1 bg-gray-100 rounded-r-md shrink-0">
               <Tooltip title="Copy username">
                 <Button
@@ -551,7 +600,7 @@ const Credentials: React.FC = () => {
                   icon={<CopyOutlined />}
                   onClick={(e) => {
                     e.stopPropagation();
-                    copyToClipboard(text, 'username');
+                    copyToClipboard(text, "username");
                   }}
                 />
               </Tooltip>
@@ -560,15 +609,15 @@ const Credentials: React.FC = () => {
         ),
       },
       {
-        title: 'Password',
-        dataIndex: 'password',
-        key: 'password',
+        title: "Password",
+        dataIndex: "password",
+        key: "password",
         width: 250,
         ellipsis: true,
         render: (_: any, record: Credential) => (
           <div className="flex bg-gray-50 justify-between items-center rounded-md">
             <div className="truncate px-2 font-mono">
-              {visiblePasswords[record.id] ? record.password : '••••••••'}
+              {visiblePasswords[record.id] ? record.password : "••••••••"}
             </div>
             <div className="flex ml-1 bg-gray-100 rounded-r-md shrink-0">
               <Tooltip title="Toggle visibility">
@@ -593,7 +642,7 @@ const Credentials: React.FC = () => {
                   icon={<CopyOutlined />}
                   onClick={(e) => {
                     e.stopPropagation();
-                    copyToClipboard(record.password, 'password');
+                    copyToClipboard(record.password, "password");
                   }}
                 />
               </Tooltip>
@@ -602,11 +651,11 @@ const Credentials: React.FC = () => {
         ),
       },
       {
-        title: 'Actions',
-        key: 'actions',
-        fixed: 'right' as const,
+        title: "Actions",
+        key: "actions",
+        fixed: "right" as const,
         width: 120,
-        className: 'bg-white',
+        className: "bg-white",
         render: (_: any, record: Credential) => (
           <div className="flex gap-2 justify-end">
             <Button
@@ -639,12 +688,29 @@ const Credentials: React.FC = () => {
         scroll={{ x: 1200 }}
       />
     );
-  }, [filteredCredentials, handleEdit, handleDelete, visiblePasswords, copyToClipboard, togglePasswordVisibility]);
+  }, [
+    filteredCredentials,
+    handleEdit,
+    handleDelete,
+    visiblePasswords,
+    copyToClipboard,
+    togglePasswordVisibility,
+  ]);
+
+  const handleLock = () => {
+    setIsLocked(true);
+    localStorage.setItem("isLocked", "true");
+  };
+
+  const handleUnlock = () => {
+    setIsLocked(false);
+    localStorage.setItem("isLocked", "false");
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      <Header onLockScreen={() => setIsLocked(true)} />
-      <LockScreen isLocked={isLocked} onUnlock={() => setIsLocked(false)} />
+      <Header onLockScreen={handleLock} />
+      <LockScreen isLocked={isLocked} onUnlock={handleUnlock} />
 
       <div
         className={`max-w-7xl mx-auto px-4 py-6 flex-1 ${
@@ -659,46 +725,48 @@ const Credentials: React.FC = () => {
               className="w-full"
             />
             <div className="hidden  sm:block">
-            <Button.Group>
-              <Button
-                type={isGridView ? "primary" : "default"}
-                icon={<AppstoreOutlined />}
-                onClick={() => setIsGridView(true)}
-              />
-              {showListViewOption && (
+              <Button.Group>
                 <Button
-                  type={!isGridView ? "primary" : "default"}
-                  icon={<UnorderedListOutlined />}
-                  onClick={() => setIsGridView(false)}
+                  type={isGridView ? "primary" : "default"}
+                  icon={<AppstoreOutlined />}
+                  onClick={() => setIsGridView(true)}
                 />
-              )}
-              <Tooltip
-                title={
-                  showAllPasswords ? "Hide all passwords" : "Show all passwords"
-                }
-              >
-                <Button
-                  type={showAllPasswords ? "primary" : "default"}
-                  icon={
-                    showAllPasswords ? (
-                      <EyeInvisibleOutlined />
-                    ) : (
-                      <EyeOutlined />
-                    )
-                  }
-                  onClick={() => setShowAllPasswords(!showAllPasswords)}
-                />
-              </Tooltip>
-              {isMobileView && (
-                <Tooltip title="Password Generator">
+                {showListViewOption && (
                   <Button
-                    type={isPasswordGenVisible ? "primary" : "default"}
-                    icon={<KeyOutlined />}
-                    onClick={() => setIsPasswordGenVisible(true)}
+                    type={!isGridView ? "primary" : "default"}
+                    icon={<UnorderedListOutlined />}
+                    onClick={() => setIsGridView(false)}
+                  />
+                )}
+                <Tooltip
+                  title={
+                    showAllPasswords
+                      ? "Hide all passwords"
+                      : "Show all passwords"
+                  }
+                >
+                  <Button
+                    type={showAllPasswords ? "primary" : "default"}
+                    icon={
+                      showAllPasswords ? (
+                        <EyeInvisibleOutlined />
+                      ) : (
+                        <EyeOutlined />
+                      )
+                    }
+                    onClick={() => setShowAllPasswords(!showAllPasswords)}
                   />
                 </Tooltip>
-              )}
-            </Button.Group>
+                {isMobileView && (
+                  <Tooltip title="Password Generator">
+                    <Button
+                      type={isPasswordGenVisible ? "primary" : "default"}
+                      icon={<KeyOutlined />}
+                      onClick={() => setIsPasswordGenVisible(true)}
+                    />
+                  </Tooltip>
+                )}
+              </Button.Group>
             </div>
             <Button
               type="primary"
@@ -709,60 +777,55 @@ const Credentials: React.FC = () => {
               {isMobileView ? "Add" : "Add Credential"}
             </Button>
           </div>
-          
         </div>
         <div className="my-4 flex justify-between sm:hidden">
           <Button.Group>
+            <Button
+              type={isGridView ? "primary" : "default"}
+              icon={<AppstoreOutlined />}
+              onClick={() => setIsGridView(true)}
+            />
+            {showListViewOption && (
               <Button
-                type={isGridView ? "primary" : "default"}
-                icon={<AppstoreOutlined />}
-                onClick={() => setIsGridView(true)}
+                type={!isGridView ? "primary" : "default"}
+                icon={<UnorderedListOutlined />}
+                onClick={() => setIsGridView(false)}
               />
-              {showListViewOption && (
-                <Button
-                  type={!isGridView ? "primary" : "default"}
-                  icon={<UnorderedListOutlined />}
-                  onClick={() => setIsGridView(false)}
-                />
-              )}
-              <Tooltip
-                title={
-                  showAllPasswords ? "Hide all passwords" : "Show all passwords"
+            )}
+            <Tooltip
+              title={
+                showAllPasswords ? "Hide all passwords" : "Show all passwords"
+              }
+            >
+              <Button
+                type={showAllPasswords ? "primary" : "default"}
+                icon={
+                  showAllPasswords ? <EyeInvisibleOutlined /> : <EyeOutlined />
                 }
-              >
+                onClick={() => setShowAllPasswords(!showAllPasswords)}
+              />
+            </Tooltip>
+            {isMobileView && (
+              <Tooltip title="Password Generator">
                 <Button
-                  type={showAllPasswords ? "primary" : "default"}
-                  icon={
-                    showAllPasswords ? (
-                      <EyeInvisibleOutlined />
-                    ) : (
-                      <EyeOutlined />
-                    )
-                  }
-                  onClick={() => setShowAllPasswords(!showAllPasswords)}
+                  type={isPasswordGenVisible ? "primary" : "default"}
+                  icon={<KeyOutlined />}
+                  onClick={() => setIsPasswordGenVisible(true)}
                 />
               </Tooltip>
-              {isMobileView && (
-                <Tooltip title="Password Generator">
-                  <Button
-                    type={isPasswordGenVisible ? "primary" : "default"}
-                    icon={<KeyOutlined />}
-                    onClick={() => setIsPasswordGenVisible(true)}
-                  />
-                </Tooltip>
-              )}
-            </Button.Group>
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              onClick={() => setIsModalVisible(true)}
-            >
-              {isMobileView ? "Add" : "Add Credential"}
-            </Button>
-          </div>
+            )}
+          </Button.Group>
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={() => setIsModalVisible(true)}
+          >
+            {isMobileView ? "Add" : "Add Credential"}
+          </Button>
+        </div>
 
         <div className="flex gap-6">
-          <div className={`flex-grow ${!isMobileView ? 'flex-1' : 'w-full'}`}>
+          <div className={`flex-grow ${!isMobileView ? "flex-1" : "w-full"}`}>
             {loading ? (
               <div>Loading...</div>
             ) : isGridView ? (

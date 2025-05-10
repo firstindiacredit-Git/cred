@@ -1,14 +1,14 @@
-import React, { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { Drawer, Button } from 'antd';
-import { 
-  DashboardOutlined, 
-  LoginOutlined, 
-  LogoutOutlined, 
+import React, { useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { Drawer, Button } from "antd";
+import {
+  DashboardOutlined,
+  LoginOutlined,
+  LogoutOutlined,
   LockOutlined,
-  MenuOutlined 
-} from '@ant-design/icons';
-import { useAuth } from '../contexts/AuthContext';
+  MenuOutlined,
+} from "@ant-design/icons";
+import { useAuth } from "../contexts/AuthContext";
 
 const Navigation: React.FC = () => {
   const navigate = useNavigate();
@@ -18,42 +18,45 @@ const Navigation: React.FC = () => {
 
   const handleLogout = async () => {
     await logout();
-    navigate('/');
+    navigate("/");
   };
 
   const menuItems = [
     {
-      key: '/',
+      key: "/",
       icon: <DashboardOutlined />,
-      label: 'Dashboard',
+      label: "Dashboard",
     },
-      {
-        key: '/locker',
-        icon: <LockOutlined />,
-        label: 'Locker',
-      }
-    
+    {
+      key: "/locker",
+      icon: <LockOutlined />,
+      label: "Locker",
+    },
   ];
-  
 
   return (
     <nav className="bg-gradient-to-r from-blue-600 to-blue-800 shadow-lg">
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex justify-between h-16">
           <div className="flex items-center">
-            <span className="text-white font-bold text-xl">ServerMonk <span className='align-super text-xs text-black'>by Pizeonfly</span></span>
+            <span className="text-white font-bold text-xl">
+              Cred
+              <span className="align-super text-xs text-black">
+                by Pizeonfly
+              </span>
+            </span>
           </div>
-          
+
           {/* Desktop Menu */}
           <div className="hidden md:flex md:space-x-8">
-            {menuItems.map(item => (
+            {menuItems.map((item) => (
               <button
                 key={item.key}
                 onClick={() => navigate(item.key)}
                 className={`flex items-center space-x-2 px-3 py-2 text-sm font-medium ${
                   location.pathname === item.key
-                    ? 'text-white border-b-2 border-white'
-                    : 'text-blue-100 hover:text-white hover:border-b-2 hover:border-blue-100'
+                    ? "text-white border-b-2 border-white"
+                    : "text-blue-100 hover:text-white hover:border-b-2 hover:border-blue-100"
                 }`}
               >
                 <span className="text-lg">{item.icon}</span>
@@ -63,15 +66,13 @@ const Navigation: React.FC = () => {
           </div>
 
           <div className="hidden md:flex md:items-center md:space-x-4">
-            
-              <button
-                onClick={handleLogout}
-                className="flex bg-red-600 px-3 py-2 rounded-lg drop-shadow-sm hover:bg-red-500 transition-all items-center space-x-2 text-white hover:text-white"
-              >
-                <LogoutOutlined />
-                <span>Logout</span>
-              </button>
-            
+            <button
+              onClick={handleLogout}
+              className="flex bg-red-600 px-3 py-2 rounded-lg drop-shadow-sm hover:bg-red-500 transition-all items-center space-x-2 text-white hover:text-white"
+            >
+              <LogoutOutlined />
+              <span>Logout</span>
+            </button>
           </div>
 
           {/* Mobile Menu Button */}
@@ -90,7 +91,7 @@ const Navigation: React.FC = () => {
       <Drawer
         title={
           <span className="text-lg font-bold">
-            ServerPulse <span className="text-xs align-super">by Pizeonfly</span>
+            Cred <span className="text-xs align-super">by Pizeonfly</span>
           </span>
         }
         placement="right"
@@ -99,7 +100,7 @@ const Navigation: React.FC = () => {
         className="md:hidden"
       >
         <div className="flex flex-col space-y-4">
-          {menuItems.map(item => (
+          {menuItems.map((item) => (
             <button
               key={item.key}
               onClick={() => {
@@ -112,7 +113,7 @@ const Navigation: React.FC = () => {
               <span className="font-medium">{item.label}</span>
             </button>
           ))}
-          
+
           {user ? (
             <button
               onClick={() => {
@@ -127,7 +128,7 @@ const Navigation: React.FC = () => {
           ) : (
             <button
               onClick={() => {
-                navigate('/login');
+                navigate("/login");
                 setMobileMenuOpen(false);
               }}
               className="flex items-center space-x-3 px-4 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"

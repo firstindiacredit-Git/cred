@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { Modal, Input, message } from 'antd';
-import { LockOutlined } from '@ant-design/icons';
-import { useAuth } from '../contexts/AuthContext';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../firebase';
+import React, { useState, useEffect } from "react";
+import { Modal, Input, message } from "antd";
+import { LockOutlined } from "@ant-design/icons";
+import { useAuth } from "../contexts/AuthContext";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "../firebase";
 
 interface LockScreenProps {
   isLocked: boolean;
@@ -11,36 +11,46 @@ interface LockScreenProps {
 }
 
 const LockScreen: React.FC<LockScreenProps> = ({ isLocked, onUnlock }) => {
-  const [pin, setPin] = useState('');
+  const [pin, setPin] = useState("");
   const { user } = useAuth();
   const [storedPin, setStoredPin] = useState(); // Default PIN
 
   useEffect(() => {
     const fetchPin = async () => {
-      if (!user) return; 
-  
+      if (!user) return;
+
       try {
-        const pinDoc = await getDoc(doc(db, 'users', user.uid, 'settings', 'pin'));
+        const pinDoc = await getDoc(
+          doc(db, "users", user.uid, "settings", "pin")
+        );
         if (pinDoc.exists()) {
           setStoredPin(pinDoc.data().pin);
           // console.log("pin successfully fetched:", storedPin);
         }
       } catch (error) {
-        console.error('Error fetching PIN:', error);
+        console.error("Error fetching PIN:", error);
       }
     };
-  
+
     fetchPin();
   }, [user]);
 
- 
+  useEffect(() => {
+    if (isLocked) {
+      localStorage.setItem("isLocked", "true");
+    } else {
+      localStorage.setItem("isLocked", "false");
+    }
+  }, [isLocked]);
+
   const handleUnlock = () => {
     if (pin === storedPin) {
-      setPin('');
+      setPin("");
+      localStorage.setItem("isLocked", "false");
       onUnlock();
     } else {
-      message.error('Incorrect PIN');
-      setPin('');
+      message.error("Incorrect PIN");
+      setPin("");
     }
   };
 
